@@ -1,21 +1,7 @@
 
 #include "libbc7enc.h"
 
-
 #include <stdio.h>
-
-enum bc7enc_error {
-	bc7enc_error_success = 0,
-	bc7enc_error_no_source_file_name,
-	bc7enc_error_null_output_pointer,
-	bc7enc_error_could_not_load_source_file,
-	bc7enc_error_could_not_initialize_encoder,
-	bc7enc_error_could_not_encode_image,
-	bc7enc_error_out_of_memory,
-	bc7enc_error_no_data,
-};
-
-// FIXME: Add alternative entry point that takes rgba image data directly.
 
 enum bc7enc_error compress_image_from_memory(int width, int height, void* data, rdo_bc::rdo_bc_params params, encode_output* output)
 {
