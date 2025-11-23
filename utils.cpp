@@ -164,6 +164,59 @@ void image_u8::rasterize_line(int xs, int ys, int xe, int ye, int pred, int inc_
 	}
 }
 
+// FIXME: Care about the clip rect?
+void image_u8_mip::generate_mipmaps(mipmap_generation_method method)
+{
+	int levels = 1 + ilogb(std::max(m_levels[0].width(), m_levels[0].height()));
+	m_levels.resize(levels);
+
+	for (int i = 1; i < m_levels.size(); i++)
+	{
+		int prev_level = i - 1;
+		image_u8& prev = m_levels[prev_level];
+
+		image_u8 next(std::max(1u, prev.width() / 2), std::max(1u, prev.height() / 2));
+
+		for (uint32_t y = 0; y < next.height(); y++)
+		{
+			for (uint32_t x = 0; x < next.width(); x++)
+			{
+				color_quad_u8 value0 = prev(x * 2 + 0, y * 2 + 0);
+				color_quad_u8 value1 = prev(x * 2 + 1, y * 2 + 0);
+				color_quad_u8 value2 = prev(x * 2 + 0, y * 2 + 1);
+				color_quad_u8 value3 = prev(x * 2 + 1, y * 2 + 1);
+
+				color_quad_u8 value;
+				switch (method)
+				{
+				case mipmap_generation_method_LinearBox:
+					value.r = (((uint32_t)value0.r + (uint32_t)value1.r + (uint32_t)value2.r + (uint32_t)value3.r) / 4);
+					value.g = (((uint32_t)value0.g + (uint32_t)value1.g + (uint32_t)value2.g + (uint32_t)value3.g) / 4);
+					value.b = (((uint32_t)value0.b + (uint32_t)value1.b + (uint32_t)value2.b + (uint32_t)value3.b) / 4);
+					break;
+				case mipmap_generation_method_sRGBBox:
+					vec4F value0f = sRGB_to_linearf(value0);
+					vec4F value1f = sRGB_to_linearf(value1);
+					vec4F value2f = sRGB_to_linearf(value2);
+					vec4F value3f = sRGB_to_linearf(value3);
+
+					value.r = linearf_to_sRGB((value0f[0] + value1f[0] + value2f[0] + value3f[0]) * 0.25f);
+					value.g = linearf_to_sRGB((value0f[1] + value1f[1] + value2f[1] + value3f[1]) * 0.25f);
+					value.b = linearf_to_sRGB((value0f[2] + value1f[2] + value2f[2] + value3f[2]) * 0.25f);
+					break;
+				}
+
+				// FIXME: Setting for choosing something like perserve coverage...
+				value.a = ((uint32_t)value0.a + (uint32_t)value1.a + (uint32_t)value2.a + (uint32_t)value3.a) / 4;
+
+				next(x, y) = value;
+			}
+		}
+
+		m_levels[i] = next;
+	}
+}
+
 bool load_png(const char* pFilename, image_u8& img)
 {
 	img.clear();

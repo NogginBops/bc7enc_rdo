@@ -1283,7 +1283,7 @@ static uint64_t evaluate_solution(const varying color_quad_i *uniform pLow, cons
 					float b = pC->m_c[2];
 
 					float best_sel = floor(((r * dr + lr) + (g * dg + lg) + (b * db + lb)) * f + .5f);
-					best_sel = clamp(best_sel, (float)1, (float)(N - 1));
+					best_sel = clamp(best_sel, (uniform float)1, (uniform float)(N - 1));
 
 					float best_sel0 = best_sel - 1;
 
@@ -1458,7 +1458,7 @@ static uint64_t evaluate_solution(const varying color_quad_i *uniform pLow, cons
 					float a = pC->m_c[3];
 
 					float best_sel = floor(((r * dr + lr) + (g * dg + lg) + (b * db + lb) + (a * da + la)) * f + .5f);
-					best_sel = clamp(best_sel, (float)1, (float)(N - 1));
+					best_sel = clamp(best_sel, (uniform float)1, (uniform float)(N - 1));
 
 					float best_sel0 = best_sel - 1;
 
@@ -2363,7 +2363,7 @@ static uint64_t color_cell_compression(uniform uint32_t mode, const uniform colo
 						continue;
 
 					for (uniform uint32_t i = 0; i < num_pixels; i++)
-						selectors_temp1[i] = (int)clampf(floor((float)max_selector * ((float)(int)selectors_temp[i] - (float)ly) / ((float)hy - (float)ly) + .5f), 0, (float)max_selector);
+						selectors_temp1[i] = (int)clampf(floor((float)max_selector * ((float)(int)selectors_temp[i] - (float)ly) / ((float)hy - (float)ly) + .5f), 0, (uniform float)max_selector);
 
 					vec4F_set_scalar(&xl, 0.0f);
 					vec4F_set_scalar(&xh, 0.0f);
@@ -3310,7 +3310,7 @@ static void handle_alpha_block_mode4(const varying color_quad_i *uniform pPixels
 
 		if (pComp_params->m_uber_level > 0)
 		{
-			const uniform int D = min((int)pComp_params->m_uber_level, 3);
+			const uniform int D = min((uniform int32)pComp_params->m_uber_level, 3);
 			for (uniform int ld = -D; ld <= D; ld++)
 			{
 				for (uniform int hd = -D; hd <= D; hd++)
@@ -3499,7 +3499,7 @@ static void handle_alpha_block_mode5(const varying color_quad_i *uniform pPixels
 
 		if (pComp_params->m_uber_level > 0)
 		{
-			const uniform int D = min((int)pComp_params->m_uber_level, 3);
+			const uniform int D = min((uniform int32)pComp_params->m_uber_level, 3);
 			for (uniform int ld = -D; ld <= D; ld++)
 			{
 				for (uniform int hd = -D; hd <= D; hd++)
@@ -4700,7 +4700,7 @@ export void bc7e_compress_blocks(uniform uint32_t num_blocks, uniform uint64_t *
 		int lo_r = 255, hi_r = 0;
 		int lo_g = 255, hi_g = 0;
 		int lo_b = 255, hi_b = 0;
-		float lo_a = 255, hi_a = 0;
+		int lo_a = 255, hi_a = 0;
 		
 		for (uniform uint32_t i = 0; i < 16; i++)
 		{
@@ -4720,11 +4720,7 @@ export void bc7e_compress_blocks(uniform uint32_t num_blocks, uniform uint64_t *
 			lo_r = min(lo_r, r); hi_r = max(hi_r, r);
 			lo_g = min(lo_g, g); hi_g = max(hi_g, g);
 			lo_b = min(lo_b, b); hi_b = max(hi_b, b);
-
-			float fa = a;
-
-			lo_a = min(lo_a, fa);
-			hi_a = max(hi_a, fa);
+			lo_a = min(lo_a, a); hi_a = max(hi_a, a);
 		}
 
 		bool all_same = lo_r==hi_r && lo_g==hi_g && lo_b==hi_b && lo_a==hi_a;
@@ -4738,7 +4734,7 @@ export void bc7e_compress_blocks(uniform uint32_t num_blocks, uniform uint64_t *
 			const bool has_alpha = (lo_a < 255);
 			// TODO: alpha block mode 6 only
 			cif (has_alpha)
-				handle_alpha_block(pBlock, temp_pixels, pComp_params, &params, (int)lo_a, (int)hi_a);
+				handle_alpha_block(pBlock, temp_pixels, pComp_params, &params, lo_a, hi_a);
 			else
 			{
 				if (pComp_params->m_mode6_only)

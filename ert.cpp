@@ -72,7 +72,7 @@ namespace ert
 
 		void clear() { m_num = 0; m_total = 0; m_total2 = 0; }
 
-		void update(uint32_t val) { m_num++; m_total += val; m_total2 += val * val; }
+		void update(uint32_t val) { m_num++; m_total += val; m_total2 += (uint64_t)val * val; }
 
 		tracked_stat& operator += (uint32_t val) { update(val); return *this; }
 

@@ -28,7 +28,6 @@ static int print_usage()
 	fprintf(stderr, "-mip Generate mipmaps.\n");
 	fprintf(stderr, "-mL Filter mipmaps for linear data (default).\n");
 	fprintf(stderr, "-mP Filter mipmaps for sRGB data (use when generating mipmaps and -s is specified).\n");
-	fprintf(stderr, "-mN Filter mipmaps for normal map data.\n");
 	fprintf(stderr, "-o Write output files to the source file's directory, instead of the current directory.\n");
 	fprintf(stderr, "-1 Encode to BC1. Use -L# option to set the base BC1 encoder's quality (default is 18 - highest quality).\n");
 	fprintf(stderr, "-3 Encode to BC3. Use -L# option to set the base BC1 encoder's quality (default is 18 - highest quality).\n");
@@ -510,11 +509,7 @@ int main(int argc, char* argv[])
 					{
 						rp.m_mipmap_method = mipmap_generation_method_sRGBBox;
 					}
-					if (strncmp(pArg, "-mN", 4) == 0)
-					{
-						rp.m_mipmap_method = mipmap_generation_method_NormalMap;
-					}
-					else if (strncmp(pArg, "-m", 2) == 0)
+					if (strncmp(pArg, "-m", 2) == 0)
 					{
 						rp.m_bc1_mode = rgbcx::bc1_approx_mode::cBC1AMD;
 					}

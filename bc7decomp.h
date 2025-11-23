@@ -34,7 +34,7 @@ public:
 		};
 	};
 
-	inline color_rgba()
+	inline color_rgba() : m_comps(), r(0), g(0), b(0), a(0)
 	{
 		static_assert(sizeof(*this) == 4, "sizeof(*this) != 4");
 	}

@@ -179,6 +179,7 @@ namespace rdo_bc
 	rdo_bc_encoder::rdo_bc_encoder() :
 		m_pOrig_source_image(nullptr),
 		m_source_image_mips(),
+		m_source_image(),
 		m_orig_width(0),
 		m_orig_height(0),
 		m_blocks_x(0),
@@ -543,8 +544,7 @@ namespace rdo_bc
 			{
 				if (m_params.m_status_output)
 					printf("Encoding mip: %i\n", ix);
-				// FIXME: Avoid copy?
-				image_u8& mip_image = *m_source_image_mips.get_level(ix);
+				image_u8& mip_image = m_source_image_mips.get_level(ix);
 
 				// FIXME: Do we really need to calculate these for every image?
 				uint32_t blocks_x = std::max(1u, mip_image.width() / 4);
@@ -614,8 +614,7 @@ namespace rdo_bc
 			for (uint32_t ix = 0; ix < static_cast<int32_t>(m_source_image_mips.get_number_of_levels()); ix++)
 			{
 				printf("Encoding mip: %i\n", ix);
-				// FIXME: Avoid copy?
-				image_u8& mip_image = *m_source_image_mips.get_level(ix);
+				image_u8& mip_image = m_source_image_mips.get_level(ix);
 
 				// FIXME: Do we really need to calculate these for every image?
 				uint32_t blocks_x = std::max(1u, mip_image.width() / 4);
