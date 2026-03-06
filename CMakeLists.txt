@@ -104,7 +104,7 @@ find_package(OpenMP)
 target_link_libraries(bc7enc PRIVATE OpenMP::OpenMP_C)
 
 if (NOT MSVC)
-	target_link_libraries(bc7enc m)
+	target_link_libraries(bc7enc PRIVATE m)
 endif()
 
 
