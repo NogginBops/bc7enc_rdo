@@ -76,7 +76,7 @@
 
 namespace rgbcx
 {
-	enum class bc1_approx_mode
+	enum class bc1_approx_mode : uint32_t
 	{
 		// The default mode. No rounding for 4-color colors 2,3. My older tools/compressors use this mode. 
 		// This matches the D3D10 docs on BC1.
@@ -92,6 +92,7 @@ namespace rgbcx
 		// This matches the D3D9 docs on DXT1.
 		cBC1IdealRound4 = 3
 	};
+	static_assert(std::is_same<std::underlying_type<bc1_approx_mode>::type, uint32_t>::value, "bc1_approx_mode needs to be uint32");
 
 	enum class eNoClamp { cNoClamp };
 	static inline uint8_t clamp255(int32_t i) { return (uint8_t)((i & 0xFFFFFF00U) ? (~(i >> 31)) : i); }

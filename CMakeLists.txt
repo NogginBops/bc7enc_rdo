@@ -2,13 +2,14 @@ cmake_minimum_required(VERSION 3.29)
 
 project(bc7enc)
 
-option(BUILD_X64 "build 64-bit" TRUE)
-option(SUPPORT_BC7E "support BC7E (requires ispc)" FALSE)
-option(COMPILE_AS_LIBRARY "compile to dll instead of exe" FALSE)
+option(BC7ENC_BUILD_X64 "build 64-bit" TRUE)
+option(BC7ENC_SUPPORT_BC7E "support BC7E (requires ispc)" FALSE)
+option(BC7ENC_COMPILE_AS_LIBRARY "compile to dll instead of exe" FALSE)
+option(BC7ENC_SHARED_LIBRARY "should we compile a shared library if compiling as library" TRUE)
 
 message("Initial BUILD_X64=${BUILD_X64}")
 message("Initial CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
-message("Initial SUPPORT_BC7E=${SUPPORT_BC7E}")
+message("Initial BC7ENC_SUPPORT_BC7E=${BC7ENC_SUPPORT_BC7E}")
 
 if( NOT CMAKE_BUILD_TYPE )
   set( CMAKE_BUILD_TYPE Release )
@@ -16,33 +17,21 @@ endif( NOT CMAKE_BUILD_TYPE )
 
 message( ${PROJECT_NAME} " build type: " ${CMAKE_BUILD_TYPE} )
 
-if (BUILD_X64)
+if (BC7ENC_BUILD_X64)
 	message("Building 64-bit")
 else()
 	message("Building 32-bit")
-endif(BUILD_X64)
+endif(BC7ENC_BUILD_X64)
 
-if (NOT MSVC)
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -fopenmp")
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -fopenmp")
-
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fopenmp")
-	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fopenmp")
-else()
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /openmp /W4")
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /openmp /W4")
-
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /openmp /W4")
-	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /openmp /W4")
-endif()
-
-if (SUPPORT_BC7E)
+if (BC7ENC_SUPPORT_BC7E)
 	if (NOT MSVC)
-		add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse2.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse4.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx2.o
+		set(ISPC_OBJECT_FILES ${CMAKE_SOURCE_DIR}/bc7e.o ${CMAKE_SOURCE_DIR}/bc7e_avx.o ${CMAKE_SOURCE_DIR}/bc7e_sse2.o ${CMAKE_SOURCE_DIR}/bc7e_sse4.o ${CMAKE_SOURCE_DIR}/bc7e_avx2.o)
+		add_custom_command(OUTPUT ${ISPC_OBJECT_FILES}
 			COMMAND ispc -g -O2 ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.ispc -o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.o -h ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_ispc.h --target=sse2,sse4,avx,avx2 --opt=fast-math --opt=disable-assertions
 										 	DEPENDS bc7e.ispc)
 	else()
-		add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse2.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse4.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx2.obj
+		set(ISPC_OBJECT_FILES ${CMAKE_SOURCE_DIR}/bc7e.o ${CMAKE_SOURCE_DIR}/bc7e_avx.o ${CMAKE_SOURCE_DIR}/bc7e_sse2.o ${CMAKE_SOURCE_DIR}/bc7e_sse4.o ${CMAKE_SOURCE_DIR}/bc7e_avx2.o)
+		add_custom_command(OUTPUT ${ISPC_OBJECT_FILES}
 			COMMAND ispc -g -O2 ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.ispc -o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.obj -h ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_ispc.h --target=sse2,sse4,avx,avx2 --opt=fast-math --opt=disable-assertions
 										 	DEPENDS bc7e.ispc)
 	endif()
@@ -60,8 +49,8 @@ set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} ${GCC_COMPILE_FLAGS}")
 set(CMAKE_C_FLAGS_RELEASE  "${CMAKE_C_FLAGS_RELEASE} ${GCC_COMPILE_FLAGS}")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} ${GCC_COMPILE_FLAGS} -D_DEBUG")
 
-if (SUPPORT_BC7E)
-	set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS} -DSUPPORT_BC7E=1")
+if (BC7ENC_SUPPORT_BC7E)
+	set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS} -DBC7ENC_SUPPORT_BC7E=1")
 else()
 	set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COMPILE_FLAGS}")
 endif()
@@ -92,35 +81,27 @@ set (BC7ENC_SRC_LIST ${COMMON_SRC_LIST}
 	bc7e.ispc
 	)
 
-if (NOT COMPILE_AS_LIBRARY)
+if (NOT BC7ENC_COMPILE_AS_LIBRARY)
 	set (BC7ENC_SRC_LIST ${BC7ENC_SRC_LIST} test.cpp)
 else()
 	set (BC7ENC_SRC_LIST ${BC7ENC_SRC_LIST} libbc7enc.cpp libbc7enc.h)
 endif()
 
-if (NOT COMPILE_AS_LIBRARY)
+if (NOT BC7ENC_COMPILE_AS_LIBRARY)
 	message("Compiling as executable")
-	if (NOT SUPPORT_BC7E)
-			add_executable(bc7enc ${BC7ENC_SRC_LIST})
-	else()
-		if (NOT MSVC)
-			add_executable(bc7enc ${BC7ENC_SRC_LIST} ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx2.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse2.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse4.o)
-		else()
-			add_executable(bc7enc ${BC7ENC_SRC_LIST} ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx2.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse2.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse4.obj)
-		endif()
-	endif()
+	add_executable(bc7enc ${BC7ENC_SRC_LIST} ${ISPC_OBJECT_FILES})
 else()
-	message("Compiling as library")
-	if (NOT SUPPORT_BC7E)
-		add_library(bc7enc SHARED ${BC7ENC_SRC_LIST})
+	if (BC7ENC_SHARED_LIBRARY)
+		message("Compiling as shared library")
+		add_library(bc7enc SHARED ${BC7ENC_SRC_LIST} ${ISPC_OBJECT_FILES})
 	else()
-		if (NOT MSVC)
-			add_library(bc7enc SHARED ${BC7ENC_SRC_LIST} ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx2.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse2.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse4.o)
-		else()
-			add_library(bc7enc SHARED ${BC7ENC_SRC_LIST} ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx2.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse2.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse4.obj)
-		endif()
-	endif()
+		message("Compiling as static library")
+		add_library(bc7enc STATIC ${BC7ENC_SRC_LIST} ${ISPC_OBJECT_FILES})
+	endif(BC7ENC_SHARED_LIBRARY)
 endif()
+
+find_package(OpenMP)
+target_link_libraries(bc7enc PRIVATE OpenMP::OpenMP_C)
 
 if (NOT MSVC)
 	target_link_libraries(bc7enc m)

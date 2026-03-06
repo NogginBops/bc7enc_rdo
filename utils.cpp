@@ -648,8 +648,6 @@ vec4F compute_ssim(const image_u8& a, const image_u8& b, bool luma)
 
 bool save_dds(const char* pFilename, uint32_t width, uint32_t height, uint32_t mip_levels, const void* pBlocks, uint32_t pixel_format_bpp, DXGI_FORMAT dxgi_format, bool srgb, bool force_dx10_header)
 {
-	//(void)srgb;
-
 	FILE* pFile = NULL;
 #ifdef _MSC_VER
 	fopen_s(&pFile, pFilename, "wb");
@@ -662,7 +660,11 @@ bool save_dds(const char* pFilename, uint32_t width, uint32_t height, uint32_t m
 		return false;
 	}
 
-	fwrite("DDS ", 4, 1, pFile);
+	size_t written = fwrite("DDS ", 4, 1, pFile);
+	if (written == 0) {
+		fclose(pFile);
+		return false;
+	}
 
 	DDSURFACEDESC2 desc;
 	memset(&desc, 0, sizeof(desc));
@@ -700,13 +702,21 @@ bool save_dds(const char* pFilename, uint32_t width, uint32_t height, uint32_t m
 		else if (dxgi_format == DXGI_FORMAT_BC5_UNORM)
 			desc.ddpfPixelFormat.dwFourCC = (uint32_t)PIXEL_FMT_FOURCC('A', 'T', 'I', '2');
 
-		fwrite(&desc, sizeof(desc), 1, pFile);
+		written = fwrite(&desc, sizeof(desc), 1, pFile);
+		if (written == 0) {
+			fclose(pFile);
+			return false;
+		}
 	}
 	else
 	{
 		desc.ddpfPixelFormat.dwFourCC = (uint32_t)PIXEL_FMT_FOURCC('D', 'X', '1', '0');
 
-		fwrite(&desc, sizeof(desc), 1, pFile);
+		written = fwrite(&desc, sizeof(desc), 1, pFile);
+		if (written == 0) {
+			fclose(pFile);
+			return false;
+		}
 
 		DDS_HEADER_DXT10 hdr10;
 		memset(&hdr10, 0, sizeof(hdr10));
@@ -718,7 +728,11 @@ bool save_dds(const char* pFilename, uint32_t width, uint32_t height, uint32_t m
 		hdr10.resourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE2D;
 		hdr10.arraySize = 1;
 
-		fwrite(&hdr10, sizeof(hdr10), 1, pFile);
+		written = fwrite(&hdr10, sizeof(hdr10), 1, pFile);
+		if (written == 0) {
+			fclose(pFile);
+			return false;
+		}
 	}
 
 	// Write out the mipmaps
@@ -729,7 +743,11 @@ bool save_dds(const char* pFilename, uint32_t width, uint32_t height, uint32_t m
 	{
 		// pixel_format_bpp * 2 = bytes per pixel
 		uint32_t bytes = std::max(1u, ((mipWidth + 3) / 4)) * std::max(1u, ((mipHeight + 3) / 4)) * pixel_format_bpp * 2;
-		fwrite(block_ptr, bytes, 1, pFile);
+		written = fwrite(block_ptr, bytes, 1, pFile);
+		if (written == 0) {
+			fclose(pFile);
+			return false;
+		}
 		block_ptr += bytes;
 
 		mipWidth /= 2;
