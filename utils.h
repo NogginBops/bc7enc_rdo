@@ -19,6 +19,14 @@
 #include <limits.h>
 #include "dds_defs.h"
 
+// Cursed but it's fine for now.
+// - Noggin_bops 2026-03-06
+#if defined(_WIN64)
+#define EXPORT __declspec(dllexport)
+#elif defined(__linux__)
+#define EXPORT __attribute__((visibility("default")))
+#endif
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -2507,7 +2515,7 @@ struct block16
 
 typedef std::vector<block16> block16_vec;
 
-bool save_dds(const char* pFilename, uint32_t width, uint32_t height, uint32_t mip_levels, const void* pBlocks, uint32_t pixel_format_bpp, DXGI_FORMAT dxgi_format, bool srgb, bool force_dx10_header);
+EXPORT bool save_dds(const char* pFilename, uint32_t width, uint32_t height, uint32_t mip_levels, const void* pBlocks, uint32_t pixel_format_bpp, DXGI_FORMAT dxgi_format, bool srgb, bool force_dx10_header);
 
 void strip_extension(std::string& s);
 void strip_path(std::string& s);

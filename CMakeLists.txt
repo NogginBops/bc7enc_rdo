@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.29)
 
 project(bc7enc)
 
@@ -38,12 +38,12 @@ endif()
 
 if (SUPPORT_BC7E)
 	if (NOT MSVC)
-		add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/bc7e.o ${CMAKE_SOURCE_DIR}/bc7e_avx.o ${CMAKE_SOURCE_DIR}/bc7e_sse2.o ${CMAKE_SOURCE_DIR}/bc7e_sse4.o ${CMAKE_SOURCE_DIR}/bc7e_avx2.o
-			COMMAND ispc -g -O2 ${CMAKE_SOURCE_DIR}/bc7e.ispc -o ${CMAKE_SOURCE_DIR}/bc7e.o -h ${CMAKE_SOURCE_DIR}/bc7e_ispc.h --target=sse2,sse4,avx,avx2 --opt=fast-math --opt=disable-assertions
+		add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse2.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse4.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx2.o
+			COMMAND ispc -g -O2 ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.ispc -o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.o -h ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_ispc.h --target=sse2,sse4,avx,avx2 --opt=fast-math --opt=disable-assertions
 										 	DEPENDS bc7e.ispc)
 	else()
-		add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/bc7e.obj ${CMAKE_SOURCE_DIR}/bc7e_avx.obj ${CMAKE_SOURCE_DIR}/bc7e_sse2.obj ${CMAKE_SOURCE_DIR}/bc7e_sse4.obj ${CMAKE_SOURCE_DIR}/bc7e_avx2.obj
-			COMMAND ispc -g -O2 ${CMAKE_SOURCE_DIR}/bc7e.ispc -o ${CMAKE_SOURCE_DIR}/bc7e.obj -h ${CMAKE_SOURCE_DIR}/bc7e_ispc.h --target=sse2,sse4,avx,avx2 --opt=fast-math --opt=disable-assertions
+		add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse2.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse4.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx2.obj
+			COMMAND ispc -g -O2 ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.ispc -o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.obj -h ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_ispc.h --target=sse2,sse4,avx,avx2 --opt=fast-math --opt=disable-assertions
 										 	DEPENDS bc7e.ispc)
 	endif()
 endif()
@@ -104,17 +104,21 @@ if (NOT COMPILE_AS_LIBRARY)
 			add_executable(bc7enc ${BC7ENC_SRC_LIST})
 	else()
 		if (NOT MSVC)
-			add_executable(bc7enc ${BC7ENC_SRC_LIST} ${CMAKE_SOURCE_DIR}/bc7e.o ${CMAKE_SOURCE_DIR}/bc7e_avx.o ${CMAKE_SOURCE_DIR}/bc7e_avx2.o ${CMAKE_SOURCE_DIR}/bc7e_sse2.o ${CMAKE_SOURCE_DIR}/bc7e_sse4.o)
+			add_executable(bc7enc ${BC7ENC_SRC_LIST} ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx2.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse2.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse4.o)
 		else()
-			add_executable(bc7enc ${BC7ENC_SRC_LIST} ${CMAKE_SOURCE_DIR}/bc7e.obj ${CMAKE_SOURCE_DIR}/bc7e_avx.obj ${CMAKE_SOURCE_DIR}/bc7e_avx2.obj ${CMAKE_SOURCE_DIR}/bc7e_sse2.obj ${CMAKE_SOURCE_DIR}/bc7e_sse4.obj)
+			add_executable(bc7enc ${BC7ENC_SRC_LIST} ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx2.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse2.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse4.obj)
 		endif()
 	endif()
 else()
 	message("Compiling as library")
-	if (NOT MSVC)
-		add_library(bc7enc SHARED ${BC7ENC_SRC_LIST} ${CMAKE_SOURCE_DIR}/bc7e.o ${CMAKE_SOURCE_DIR}/bc7e_avx.o ${CMAKE_SOURCE_DIR}/bc7e_avx2.o ${CMAKE_SOURCE_DIR}/bc7e_sse2.o ${CMAKE_SOURCE_DIR}/bc7e_sse4.o)
+	if (NOT SUPPORT_BC7E)
+		add_library(bc7enc SHARED ${BC7ENC_SRC_LIST})
 	else()
-		add_library(bc7enc SHARED ${BC7ENC_SRC_LIST} ${CMAKE_SOURCE_DIR}/bc7e.obj ${CMAKE_SOURCE_DIR}/bc7e_avx.obj ${CMAKE_SOURCE_DIR}/bc7e_avx2.obj ${CMAKE_SOURCE_DIR}/bc7e_sse2.obj ${CMAKE_SOURCE_DIR}/bc7e_sse4.obj)
+		if (NOT MSVC)
+			add_library(bc7enc SHARED ${BC7ENC_SRC_LIST} ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx2.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse2.o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse4.o)
+		else()
+			add_library(bc7enc SHARED ${BC7ENC_SRC_LIST} ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_avx2.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse2.obj ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_sse4.obj)
+		endif()
 	endif()
 endif()
 
