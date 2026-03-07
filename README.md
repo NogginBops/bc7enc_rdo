@@ -16,7 +16,7 @@ This repo was originally derived from [bc7enc](https://github.com/richgel999/bc7
 
 ### Compiling
 
-This build has been tested with MSVC 2019 x64 and clang 6.0.0 under Ubuntu v18.04.
+This build has been tested with MSVC 2019 x64, clang 6.0.0 under Ubuntu v18.04 and AppleClang 16.0.0 on macOS 14.7.4.
 
 To compile with bc7e.ispc (on Linux this requires [Intel's ISPC compiler](https://ispc.github.io/downloads.html) to be in your path - recommended):
 
@@ -34,8 +34,15 @@ make
 
 Note the MSVC and Linux builds enable OpenMP for faster compression.
 
-
-
+On macOS the library is tested with the AppleClang compiler.
+AppleClang doesn't ship with OpenMP and will not compile with OpenMP by default.
+To make OpenMP work on apple you first need to download `libomp` through `brew install libomp`.
+Then the following environment variables need to be set:
+```bash
+export OpenMP_ROOT=$(brew --prefix)/opt/libomp
+export LDFLAGS="$LDFLAGS -L${OpenMP_ROOT}/lib"
+```
+The cmake log will tell you if OpenMP was detected correctly.
 
 ### Examples
 
