@@ -482,7 +482,8 @@ namespace rdo_bc
 			clock_t start = clock();
 			m_source_image_mips.generate_mipmaps(m_params.m_mipmap_method);
 			clock_t end = clock();
-			printf("Generating mipmaps took: %f s\n", (double)(end - start) / CLOCKS_PER_SEC);
+			if (m_params.m_status_output)
+				printf("Generating mipmaps took: %f s\n", (double)(end - start) / CLOCKS_PER_SEC);
 
 			// All mip levels fit in 2*x * 2*y blocks
 			m_total_blocks_x = m_blocks_x + m_blocks_x;
@@ -613,7 +614,8 @@ namespace rdo_bc
 			int32_t image_start_block_offset = 0;
 			for (uint32_t ix = 0; ix < static_cast<int32_t>(m_source_image_mips.get_number_of_levels()); ix++)
 			{
-				printf("Encoding mip: %i\n", ix);
+				if (m_params.m_status_output)
+					printf("Encoding mip: %i\n", ix);
 				image_u8& mip_image = m_source_image_mips.get_level(ix);
 
 				// FIXME: Do we really need to calculate these for every image?
