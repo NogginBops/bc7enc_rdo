@@ -7,7 +7,9 @@
 #if defined(_WIN64)
 #define EXPORT __declspec(dllexport)
 #elif defined(__linux__)
-#define EXPORT __attribute__((visibility("default"))) 
+#define EXPORT __attribute__((visibility("default")))
+#elif defined(__APPLE__)
+#define EXPORT
 #endif
 
 extern "C" {

@@ -44,6 +44,7 @@ enum bc7enc_error bc7enc_compress_image_from_memory(int width, int height, void*
 	memcpy(output->blocks, blocks2, encoder.get_total_blocks_all_mips_size_in_bytes());
 	output->num_blocks = encoder.get_total_blocks_all_mips();
 	output->bytes_per_block = encoder.get_bytes_per_block();
+	output->bits_per_pixel = encoder.get_pixel_format_bpp();
 
 	return bc7enc_error_success;
 }

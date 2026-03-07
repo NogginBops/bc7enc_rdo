@@ -34,6 +34,9 @@ make
 
 Note the MSVC and Linux builds enable OpenMP for faster compression.
 
+
+
+
 ### Examples
 
 The [.DDS](https://docs.microsoft.com/en-us/windows/win32/direct3ddds/dx-graphics-dds-pguide) output files can be loaded/viewed using tools like [AMD Compressonator](https://gpuopen.com/compressonator/).
