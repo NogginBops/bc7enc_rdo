@@ -36,6 +36,8 @@ extern "C" {
 		bc7enc_error_null_input_memory,
 	};
 
+	// FIXME: Compress from memory with prefiltered mipmaps...
+
 	EXPORT enum bc7enc_error bc7enc_compress_image_from_memory(int width, int height, void* data, rdo_bc::rdo_bc_params params, encode_output* output);
 
 	EXPORT enum bc7enc_error bc7enc_compress_image_from_file(const char* image_path, rdo_bc::rdo_bc_params params, encode_output* output);

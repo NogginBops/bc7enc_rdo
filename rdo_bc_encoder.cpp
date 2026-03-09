@@ -469,22 +469,24 @@ namespace rdo_bc
 			temp.swap(m_source_image);
 		}
 
-		m_source_image.crop_dup_borders((m_source_image.width() + 3) & ~3, (m_source_image.height() + 3) & ~3);
-
-		m_blocks_x = m_source_image.width() / 4;
-		m_blocks_y = m_source_image.height() / 4;
-		m_total_blocks = m_blocks_x * m_blocks_y;
-		
 		m_source_image_mips.init(m_source_image);
 		if (m_params.m_generate_mipmaps)
 		{
-			
 			clock_t start = clock();
 			m_source_image_mips.generate_mipmaps(m_params.m_mipmap_method);
 			clock_t end = clock();
 			if (m_params.m_status_output)
 				printf("Generating mipmaps took: %f s\n", (double)(end - start) / CLOCKS_PER_SEC);
+		}
 
+		m_source_image.crop_dup_borders((m_source_image.width() + 3) & ~3, (m_source_image.height() + 3) & ~3);
+
+		m_blocks_x = m_source_image.width() / 4;
+		m_blocks_y = m_source_image.height() / 4;
+		m_total_blocks = m_blocks_x * m_blocks_y;
+
+		if (m_params.m_generate_mipmaps)
+		{
 			// All mip levels fit in 2*x * 2*y blocks
 			m_total_blocks_x = m_blocks_x + m_blocks_x;
 			m_total_blocks_y = m_blocks_x + m_blocks_y;
@@ -493,6 +495,12 @@ namespace rdo_bc
 		{
 			m_total_blocks_x = m_blocks_x;
 			m_total_blocks_y = m_blocks_x;
+		}
+
+		for (size_t i = 0; i < m_source_image_mips.get_number_of_levels(); i++)
+		{
+			utils::image_u8& level = m_source_image_mips.get_level(i);
+			level.crop_dup_borders((level.width() + 3) & ~3, (level.height() + 3) & ~3);
 		}
 
 		m_total_blocks_all_mips = m_total_blocks_x * m_total_blocks_y;

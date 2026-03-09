@@ -165,6 +165,7 @@ void image_u8::rasterize_line(int xs, int ys, int xe, int ye, int pred, int inc_
 }
 
 // FIXME: Care about the clip rect?
+// TODO: We should compute intermediate results as floats and not quantize at each mip.
 void image_u8_mip::generate_mipmaps(mipmap_generation_method method)
 {
 	int levels = 1 + ilogb(std::max(m_levels[0].width(), m_levels[0].height()));
@@ -182,13 +183,14 @@ void image_u8_mip::generate_mipmaps(mipmap_generation_method method)
 			for (uint32_t x = 0; x < next.width(); x++)
 			{
 				color_quad_u8 value0 = prev(x * 2 + 0, y * 2 + 0);
-				color_quad_u8 value1 = prev(x * 2 + 1, y * 2 + 0);
-				color_quad_u8 value2 = prev(x * 2 + 0, y * 2 + 1);
-				color_quad_u8 value3 = prev(x * 2 + 1, y * 2 + 1);
+				color_quad_u8 value1 = prev.get_clamped(x * 2 + 1, y * 2 + 0);
+				color_quad_u8 value2 = prev.get_clamped(x * 2 + 0, y * 2 + 1);
+				color_quad_u8 value3 = prev.get_clamped(x * 2 + 1, y * 2 + 1);
 
 				color_quad_u8 value;
 				switch (method)
 				{
+				default:
 				case mipmap_generation_method_LinearBox:
 					value.r = (((uint32_t)value0.r + (uint32_t)value1.r + (uint32_t)value2.r + (uint32_t)value3.r) / 4);
 					value.g = (((uint32_t)value0.g + (uint32_t)value1.g + (uint32_t)value2.g + (uint32_t)value3.g) / 4);
@@ -213,7 +215,7 @@ void image_u8_mip::generate_mipmaps(mipmap_generation_method method)
 			}
 		}
 
-		m_levels[i] = next;
+		m_levels[i].swap(next);
 	}
 }
 
@@ -678,6 +680,10 @@ bool save_dds(const char* pFilename, uint32_t width, uint32_t height, uint32_t m
 	desc.dwMipMapCount = mip_levels;
 
 	desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+	if (mip_levels > 1) {
+		desc.ddsCaps.dwCaps |= DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+	}
+
 	desc.ddpfPixelFormat.dwSize = sizeof(desc.ddpfPixelFormat);
 
 	desc.ddpfPixelFormat.dwFlags |= DDPF_FOURCC;
@@ -723,8 +729,29 @@ bool save_dds(const char* pFilename, uint32_t width, uint32_t height, uint32_t m
 
 		// Not all tools support DXGI_FORMAT_BC7_UNORM_SRGB (like NVTT), but ddsview in DirectXTex pays attention to it. So not sure what to do here.
 		// For best compatibility just write DXGI_FORMAT_BC7_UNORM.
-		hdr10.dxgiFormat = srgb ? DXGI_FORMAT_BC7_UNORM_SRGB : DXGI_FORMAT_BC7_UNORM;
-		//hdr10.dxgiFormat = dxgi_format; // DXGI_FORMAT_BC7_UNORM;
+		if (srgb) {
+			switch (dxgi_format)
+			{
+			case DXGI_FORMAT_BC1_UNORM:
+				dxgi_format = DXGI_FORMAT_BC1_UNORM_SRGB;
+				break;
+			case DXGI_FORMAT_BC2_UNORM:
+				dxgi_format = DXGI_FORMAT_BC2_UNORM_SRGB;
+				break;
+			case DXGI_FORMAT_BC3_UNORM:
+				dxgi_format = DXGI_FORMAT_BC3_UNORM_SRGB;
+				break;
+			case DXGI_FORMAT_BC7_UNORM:
+				dxgi_format = DXGI_FORMAT_BC7_UNORM_SRGB;
+				break;
+			default:
+				// There is no srgb version of this format.
+				fprintf(stderr, "Cannot convert DXGI format %d to sRGB, there is no sRGB version of this format.\n", dxgi_format);
+				break;
+			}
+		}
+
+		hdr10.dxgiFormat = dxgi_format;
 		hdr10.resourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE2D;
 		hdr10.arraySize = 1;
 
