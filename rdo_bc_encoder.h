@@ -145,6 +145,7 @@ namespace rdo_bc
 		void clear();
 
 		bool init(const utils::image_u8& src_image, rdo_bc_params& params);
+		bool init(const utils::image_u8_mip& src_images, rdo_bc_params& params);
 		bool encode();
 
 		const rdo_bc_params &get_params() const { return m_params; }
@@ -182,7 +183,7 @@ namespace rdo_bc
 		bool m_has_alpha;
 
 		// For all mip levels
-		uint32_t m_total_blocks_x, m_total_blocks_y, m_total_blocks_all_mips;
+		uint32_t m_total_blocks_all_mips;
 		// For the current mip level
 		uint32_t m_blocks_x, m_blocks_y, m_total_blocks;
 		// FIXME: is this for the current mip level??
@@ -202,6 +203,7 @@ namespace rdo_bc
 #endif
 
 		void init_encoders();
+		bool init_source_images(); // Version used for mipmapped input
 		bool init_source_image();
 		bool init_encoder_params();
 		bool encode_texture();

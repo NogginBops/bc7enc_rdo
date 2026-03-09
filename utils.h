@@ -1913,7 +1913,7 @@ public:
 		return *this;
 	}
 
-	image_u8& init(uint32_t width, uint32_t height)
+	inline image_u8& init(uint32_t width, uint32_t height)
 	{
 		clear();
 
@@ -1921,6 +1921,17 @@ public:
 		m_height = height;
 		m_clip_rect.set(0, 0, width, height);
 		m_pixels.resize(width * height);
+		return *this;
+	}
+
+	inline image_u8& init(uint32_t width, uint32_t height, color_quad_u8* pixels)
+	{
+		clear();
+
+		m_width = width;
+		m_height = height;
+		m_clip_rect.set(0, 0, width, height);
+		m_pixels = color_quad_u8_vec(pixels, pixels + (width * height));
 		return *this;
 	}
 
@@ -2149,6 +2160,10 @@ public:
 		m_levels.resize(0);
 	}
 
+	image_u8_mip(int levels) : m_levels(levels)
+	{
+	}
+
 	image_u8_mip(const image_u8& base_image)
 	{
 		m_levels.resize(1);
@@ -2164,6 +2179,12 @@ public:
 	inline uint32_t get_number_of_levels() const { return (uint32_t)m_levels.size(); }
 
 	inline image_u8& get_level(uint32_t level)
+	{
+		assert(level >= 0 && level < m_levels.size());
+		return m_levels[level];
+	}
+
+	inline const image_u8& get_level(uint32_t level) const
 	{
 		assert(level >= 0 && level < m_levels.size());
 		return m_levels[level];

@@ -184,8 +184,6 @@ namespace rdo_bc
 		m_orig_height(0),
 		m_blocks_x(0),
 		m_blocks_y(0),
-		m_total_blocks_x(0),
-		m_total_blocks_y(0),
 		m_total_blocks(0),
 		m_total_blocks_all_mips(0),
 		m_bytes_per_block(0),
@@ -208,8 +206,6 @@ namespace rdo_bc
 		m_blocks_x = 0;
 		m_blocks_y = 0;
 		m_total_blocks = 0;
-		m_total_blocks_x = 0;
-		m_total_blocks_y = 0;
 		m_total_blocks_all_mips = 0;
 		m_bytes_per_block = 0;
 		m_pixel_format_bpp = 0;
@@ -239,6 +235,23 @@ namespace rdo_bc
 		init_encoders();
 
 		if (!init_source_image())
+			return false;
+
+		return true;
+	}
+
+	bool rdo_bc_encoder::init(const utils::image_u8_mip& src_image, rdo_bc_params& params)
+	{
+		clear();
+
+		// The original image is the highest mip level
+		m_pOrig_source_image = new image_u8(src_image.get_level(0));
+		m_source_image_mips = src_image;
+		m_params = params;
+
+		init_encoders();
+
+		if (!init_source_images())
 			return false;
 
 		return true;
@@ -432,6 +445,104 @@ namespace rdo_bc
 		return true;
 	}
 
+	bool rdo_bc_encoder::init_source_images()
+	{
+		switch (m_params.m_dxgi_format)
+		{
+		case DXGI_FORMAT_BC1_UNORM:
+		case DXGI_FORMAT_BC4_UNORM:
+			m_pixel_format_bpp = 4;
+			break;
+		case DXGI_FORMAT_BC3_UNORM:
+		case DXGI_FORMAT_BC5_UNORM:
+		case DXGI_FORMAT_BC7_UNORM:
+			m_pixel_format_bpp = 8;
+			break;
+		default:
+			return false;
+		}
+
+		m_bytes_per_block = (16 * m_pixel_format_bpp) / 8;
+		assert((m_bytes_per_block == 8) || (m_bytes_per_block == 16));
+
+		m_pOrig_source_image = new image_u8(m_source_image_mips.get_level(0));
+		m_source_image = *m_pOrig_source_image;
+
+		m_orig_width = m_source_image.width();
+		m_orig_height = m_source_image.height();
+
+		if (m_params.m_y_flip)
+		{
+			for (size_t i = 0; i < m_source_image_mips.get_number_of_levels(); i++)
+			{
+				auto& image = m_source_image_mips.get_level(i);
+
+				utils::image_u8 temp;
+				temp.init(image.width(), image.height());
+
+				for (uint32_t y = 0; y < image.height(); y++)
+					for (uint32_t x = 0; x < image.width(); x++)
+						temp(x, (image.height() - 1) - y) = image(x, y);
+
+				temp.swap(image);
+			}
+		}
+
+		if (m_params.m_generate_mipmaps)
+		{
+			// FIXME: Generate any additional mipmaps?
+			fprintf(stderr, "Cannot generate mipmaps when mipmaps are already provided.");
+			return false;
+		}
+		
+		m_source_image.crop_dup_borders((m_source_image.width() + 3) & ~3, (m_source_image.height() + 3) & ~3);
+
+		m_blocks_x = m_source_image.width() / 4;
+		m_blocks_y = m_source_image.height() / 4;
+		m_total_blocks = m_blocks_x * m_blocks_y;
+
+		m_total_blocks_all_mips = 0;
+		for (size_t i = 0; i < m_source_image_mips.get_number_of_levels(); i++)
+		{
+			utils::image_u8& level = m_source_image_mips.get_level(i);
+			level.crop_dup_borders((level.width() + 3) & ~3, (level.height() + 3) & ~3);
+
+			int blocks_x = level.width() + 3 / 4;
+			int blocks_y = level.width() + 3 / 4;
+
+			m_total_blocks_all_mips += blocks_x * blocks_y;
+		}
+
+		// FIXME: Is this per mip or for all mips?
+		m_total_texels = m_total_blocks * 16;
+
+		bool has_alpha = false;
+		for (int by = 0; by < ((int)m_blocks_y) && !has_alpha; by++)
+		{
+			for (uint32_t bx = 0; bx < m_blocks_x; bx++)
+			{
+				color_quad_u8 pixels[16];
+				m_source_image.get_block(bx, by, 4, 4, pixels);
+
+				for (uint32_t i = 0; i < 16; i++)
+				{
+					if (pixels[i].m_c[3] < 255)
+					{
+						has_alpha = true;
+						break;
+					}
+				}
+			}
+		}
+
+		if (m_pixel_format_bpp == 8)
+			m_packed_image16.resize(m_total_blocks_all_mips);
+		else
+			m_packed_image8.resize(m_total_blocks_all_mips);
+
+		return true;
+	}
+
 	bool rdo_bc_encoder::init_source_image()
 	{
 		switch (m_params.m_dxgi_format)
@@ -485,16 +596,17 @@ namespace rdo_bc
 		m_blocks_y = m_source_image.height() / 4;
 		m_total_blocks = m_blocks_x * m_blocks_y;
 
+		int total_blocks_x, total_blocks_y;
 		if (m_params.m_generate_mipmaps)
 		{
 			// All mip levels fit in 2*x * 2*y blocks
-			m_total_blocks_x = m_blocks_x + m_blocks_x;
-			m_total_blocks_y = m_blocks_x + m_blocks_y;
+			total_blocks_x = m_blocks_x + m_blocks_x;
+			total_blocks_y = m_blocks_x + m_blocks_y;
 		}
 		else
 		{
-			m_total_blocks_x = m_blocks_x;
-			m_total_blocks_y = m_blocks_x;
+			total_blocks_x = m_blocks_x;
+			total_blocks_y = m_blocks_x;
 		}
 
 		for (size_t i = 0; i < m_source_image_mips.get_number_of_levels(); i++)
@@ -503,7 +615,7 @@ namespace rdo_bc
 			level.crop_dup_borders((level.width() + 3) & ~3, (level.height() + 3) & ~3);
 		}
 
-		m_total_blocks_all_mips = m_total_blocks_x * m_total_blocks_y;
+		m_total_blocks_all_mips = total_blocks_x * total_blocks_y;
 		// FIXME: Is this per mip or for all mips?
 		m_total_texels = m_total_blocks * 16;
 

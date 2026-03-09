@@ -3,6 +3,62 @@
 
 #include <stdio.h>
 
+enum bc7enc_error bc7enc_compress_image_mips_from_memory(int width, int height, int mip_levels, const void** data, rdo_bc::rdo_bc_params params, encode_output* output)
+{
+	// If we don't 
+	if (output == NULL)
+		return bc7enc_error_null_output_pointer;
+
+	if (data == NULL)
+	{
+		return bc7enc_error_null_input_memory;
+	}
+
+	utils::image_u8_mip source_images(mip_levels);
+
+	int mip_width = width;
+	int mip_height = height;
+	for (size_t i = 0; i < mip_levels; i++)
+	{
+		auto& level = source_images.get_level(i);
+		level.init(mip_width, mip_height, (utils::color_quad_u8*)data[i]);
+
+		mip_width = std::max(1, mip_width / 2);
+		mip_height = std::max(1, mip_height / 2);
+	}
+
+	// FIXME: Make the encoder write directly to a specified memory location
+	// We can't take ownership of the data inside the vector so as long as we use it
+	// we need to do a copy of the data...
+	rdo_bc::rdo_bc_encoder encoder;
+	if (!encoder.init(source_images, params))
+	{
+		return bc7enc_error_could_not_initialize_encoder;
+	}
+
+	if (!encoder.encode())
+	{
+		return bc7enc_error_could_not_encode_image;
+	}
+
+	output->width = encoder.get_orig_width();
+	output->height = encoder.get_orig_height();
+	output->mipmap_count = encoder.get_mip_levels();
+	output->format = params.m_dxgi_format;
+	output->blocks = (char*)malloc(encoder.get_total_blocks_all_mips() * encoder.get_bytes_per_block());
+	if (output->blocks == NULL)
+	{
+		return bc7enc_error_out_of_memory;
+	}
+	const void* blocks2 = encoder.get_blocks();
+	memcpy(output->blocks, blocks2, encoder.get_total_blocks_all_mips_size_in_bytes());
+	output->num_blocks = encoder.get_total_blocks_all_mips();
+	output->bytes_per_block = encoder.get_bytes_per_block();
+	output->bits_per_pixel = encoder.get_pixel_format_bpp();
+
+	return bc7enc_error_success;
+}
+
 enum bc7enc_error bc7enc_compress_image_from_memory(int width, int height, void* data, rdo_bc::rdo_bc_params params, encode_output* output)
 {
 	// If we don't 
