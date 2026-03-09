@@ -673,7 +673,7 @@ namespace rdo_bc
 
 				bool clamp_block = (mip_image.width() < 4) || (mip_image.height() < 4);
 				
-#pragma omp parallel for
+				#pragma omp parallel for if (m_params.m_compress_multithreaded)
 				for (int32_t by = 0; by < static_cast<int32_t>(blocks_y); by++)
 				{
 					// Process 64 blocks at a time, for efficient SIMD processing.
@@ -743,8 +743,8 @@ namespace rdo_bc
 				uint32_t blocks_y = std::max(1u, mip_image.height() / 4);
 
 				bool clamp_block = (mip_image.width() < 4) || (mip_image.height() < 4);
-
-#pragma omp parallel for
+				
+				#pragma omp parallel for if (m_params.m_compress_multithreaded)
 				for (int by = 0; by < (int)blocks_y; by++)
 				{
 					for (uint32_t bx = 0; bx < blocks_x; bx++)
@@ -801,7 +801,7 @@ namespace rdo_bc
 
 							bc7enc_compress_block(pBlock, pixels, &m_bc7enc_pack_params);
 
-#pragma omp critical
+							#pragma omp critical
 							{
 								uint32_t mode = ((uint8_t*)pBlock)[0];
 								for (uint32_t m = 0; m <= 7; m++)

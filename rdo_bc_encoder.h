@@ -71,6 +71,7 @@ namespace rdo_bc
 			m_bc345_mode_mask = rgbcx::BC4_USE_ALL_MODES;
 
 			m_bc7enc_mode6_only = false;
+			m_compress_multithreaded = true;
 			m_rdo_multithreading = true;
 
 			m_bc7enc_reduce_entropy = false;
@@ -127,6 +128,8 @@ namespace rdo_bc
 		uint32_t m_bc345_mode_mask;
 
 		bool m_bc7enc_mode6_only;
+
+		bool m_compress_multithreaded;
 		bool m_rdo_multithreading;
 
 		bool m_bc7enc_reduce_entropy;
