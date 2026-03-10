@@ -11,12 +11,12 @@
       "ctestCommandArgs": "",
       "variables": [
         {
-          "name": "COMPILE_AS_LIBRARY",
+          "name": "BC7ENC_COMPILE_AS_LIBRARY",
           "value": "False",
           "type": "BOOL"
         },
         {
-          "name": "SUPPORT_BC7E",
+          "name": "BC7ENC_SUPPORT_BC7E",
           "value": "True",
           "type": "BOOL"
         }
@@ -33,12 +33,12 @@
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "variables": [
         {
-          "name": "COMPILE_AS_LIBRARY",
-          "value": "False",
+          "name": "BC7ENC_COMPILE_AS_LIBRARY",
+          "value": "false",
           "type": "BOOL"
         },
         {
-          "name": "SUPPORT_BC7E",
+          "name": "BC7ENC_SUPPORT_BC7E",
           "value": "True",
           "type": "BOOL"
         }
@@ -55,17 +55,12 @@
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "variables": [
         {
-          "name": "COMPILE_AS_LIBRARY",
-          "value": "True",
-          "type": "BOOL"
-        },
-        {
-          "name": "SUPPORT_BC7E",
-          "value": "True",
-          "type": "BOOL"
-        },
-        {
           "name": "BC7ENC_COMPILE_AS_LIBRARY",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "BC7ENC_SUPPORT_BC7E",
           "value": "True",
           "type": "BOOL"
         }
@@ -82,17 +77,12 @@
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "variables": [
         {
-          "name": "COMPILE_AS_LIBRARY",
-          "value": "True",
-          "type": "BOOL"
-        },
-        {
-          "name": "SUPPORT_BC7E",
-          "value": "True",
-          "type": "BOOL"
-        },
-        {
           "name": "BC7ENC_COMPILE_AS_LIBRARY",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "BC7ENC_SUPPORT_BC7E",
           "value": "True",
           "type": "BOOL"
         }

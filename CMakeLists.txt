@@ -30,7 +30,7 @@ if (BC7ENC_SUPPORT_BC7E)
 			COMMAND ispc -g -O2 ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.ispc -o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.o -h ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_ispc.h --target=sse2,sse4,avx,avx2 --opt=fast-math --opt=disable-assertions
 										 	DEPENDS bc7e.ispc)
 	else()
-		set(ISPC_OBJECT_FILES ${CMAKE_SOURCE_DIR}/bc7e.o ${CMAKE_SOURCE_DIR}/bc7e_avx.o ${CMAKE_SOURCE_DIR}/bc7e_sse2.o ${CMAKE_SOURCE_DIR}/bc7e_sse4.o ${CMAKE_SOURCE_DIR}/bc7e_avx2.o)
+		set(ISPC_OBJECT_FILES ${CMAKE_SOURCE_DIR}/bc7e.obj ${CMAKE_SOURCE_DIR}/bc7e_avx.obj ${CMAKE_SOURCE_DIR}/bc7e_sse2.obj ${CMAKE_SOURCE_DIR}/bc7e_sse4.obj ${CMAKE_SOURCE_DIR}/bc7e_avx2.obj)
 		add_custom_command(OUTPUT ${ISPC_OBJECT_FILES}
 			COMMAND ispc -g -O2 ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.ispc -o ${CMAKE_CURRENT_SOURCE_DIR}/bc7e.obj -h ${CMAKE_CURRENT_SOURCE_DIR}/bc7e_ispc.h --target=sse2,sse4,avx,avx2 --opt=fast-math --opt=disable-assertions
 										 	DEPENDS bc7e.ispc)
